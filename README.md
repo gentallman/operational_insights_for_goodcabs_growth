@@ -1,6 +1,17 @@
-"# operational_insights_for_goodcabs_growth" 
+<h2 align="center">
+ <img src="https://github.com/user-attachments/assets/22d45d68-1868-496f-87c2-4258115d9c9f" alt="Live Project" width="100"> <br>
+  <br>
+  Codebasics Resume Project Challenge #13
+	<h3 align="center">
+  Opearional Insights for GoodCabs Growth 2024
+</h3>
 
-**Business Requests**
+</h2>
+
+
+
+
+**Ad-Hoc Business Requests**
 ---
 
 **Business Request 1: City-Level Fare and Trip Summary Report**  
