@@ -111,7 +111,7 @@ Generate a report that shows the percentage distribution of repeat passengers by
 - 9-Trips  
 - 10-Trips  
 
-```
+```sql
 SELECT 
     dd.city_name AS "City",
     ROUND((SUM(CASE
