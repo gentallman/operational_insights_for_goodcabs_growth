@@ -313,7 +313,7 @@ select
     DATE_FORMAT(fps.month, '%M %Y') as "Month",
     fps.total_passengers as "Passengers",
     fps.repeat_passengers as "Repeat Passengers",
-    round((fps.repeat_passengers/fps.total_passengers)*100, 2) "Repeat Rate (%)"
+    round((fps.repeat_passengers/fps.total_passengers)*100, 2) "Monthly Passengers Repeat Rate (%)"
 from fact_passenger_summary as fps
 join dim_city as dc
 on fps.city_id = dc.city_id
@@ -354,7 +354,7 @@ SELECT
     city AS "City",
     passengers AS "Passengers",
     repeat_passengers AS "Repeat Passengers",
-    city_repeat_passenger_rate AS "Repeat Rate (%)"
+    city_repeat_passenger_rate AS "City-wise Passengers Repeat Rate (%)"
 FROM
     CityRepeatPassengerRate
 ORDER BY
