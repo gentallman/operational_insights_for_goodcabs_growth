@@ -26,7 +26,7 @@ Generate a report that summarizes the total trips, average fare per kilometer, a
 
 ```sql
 SELECT 
-    c.city_name AS "City",
+    dc.city_name AS "City",
     COUNT(ft.trip_id) AS "Trips",
     ROUND(SUM(ft.fare_amount) / SUM(ft.distance_travelled_km), 2) AS "Average Fare per KM (₹)",
     ROUND(SUM(ft.fare_amount) / COUNT(ft.trip_id), 2) AS "Average Fare per Trip (₹)",
@@ -37,13 +37,12 @@ SELECT
 FROM 
     fact_trips ft
 JOIN 
-    dim_city c 
-    ON ft.city_id = c.city_id
+    dim_city dc 
+    ON ft.city_id = dc.city_id
 GROUP BY 
-    c.city_name
+    dc.city_name
 ORDER BY 
     "Trips" DESC;
-
 ```
 
 ---
@@ -113,7 +112,7 @@ Generate a report that shows the percentage distribution of repeat passengers by
 
 ```sql
 SELECT 
-    dd.city_name AS "City",
+    dc.city_name AS "City",
     ROUND((SUM(CASE
 				WHEN SUBSTRING_INDEX(drtd.trip_count, '-', 1) = "2" THEN drtd.repeat_passenger_count ELSE 0
 			   END)* 100 / 
@@ -160,14 +159,14 @@ SELECT
 		   SUM(drtd.repeat_passenger_count)), 2
 		  ) AS "10-Trips"
 FROM 
-    dim_city AS dd
+    dim_city AS dc
 JOIN 
     dim_repeat_trip_distribution AS drtd
-    ON dd.city_id = drtd.city_id    
+    ON dc.city_id = drtd.city_id    
 GROUP BY
-    dd.city_name
+    dc.city_name
 ORDER BY
-    dd.city_name;
+    dc.city_name;
 ```
 
 ---
@@ -183,16 +182,16 @@ Generate a report that calculates the total new passengers for each city and ran
 ```sql
 WITH RankCity AS (
     SELECT 
-        c.city_name,
+        dc.city_name,
         SUM(fps.new_passengers) AS total_new_passengers,
         RANK() OVER (ORDER BY SUM(fps.new_passengers) DESC) AS rank_desc,
         RANK() OVER (ORDER BY SUM(fps.new_passengers)) AS rank_asc
     FROM 
         trips_db.fact_passenger_summary fps
     JOIN 
-        trips_db.dim_city c ON fps.city_id = c.city_id
+        trips_db.dim_city dc ON fps.city_id = dc.city_id
     GROUP BY 
-        c.city_name
+        dc.city_name
 ),
 TopBottomCities AS (
     -- Filter for Top 3 and Bottom 3 cities
@@ -281,19 +280,67 @@ ORDER BY
 
 **Business Request 6: Repeat Passenger Rate Analysis**  
 Generate a report that calculates two key metrics:  
-1. **Monthly Repeat Passenger Rate:** The repeat passenger rate for each city and month, calculated by comparing repeat passengers to the total number of passengers.  
-2. **City-wide Repeat Passenger Rate:** The overall repeat passenger rate for each city, calculated by aggregating repeat passenger data across all months.  
-
-These metrics will provide insights into monthly repeat trends and overall repeat behavior for each city.  
-
+1. **Monthly Repeat Passenger Rate:** The repeat passenger rate for each city and month, calculated by comparing repeat passengers to the total number of passengers.
 **Fields:**  
 - city name  
 - month  
 - total_passengers  
 - repeat_passengers  
 - monthly_repeat_passenger_rate (%): Repeat passenger rate at the city and month level  
+
+```sql
+select
+	dc.city_name as "City",
+    DATE_FORMAT(fps.month, '%M %Y') as "Month",
+    fps.total_passengers as "Passengers",
+    fps.repeat_passengers as "Repeat Passengers",
+    round((fps.repeat_passengers/fps.total_passengers)*100, 2) "Repeat Rate (%)"
+from fact_passenger_summary as fps
+join dim_city as dc
+on fps.city_id = dc.city_id
+order by 
+	dc.city_name
+```
+2. **City-wide Repeat Passenger Rate:** The overall repeat passenger rate for each city, calculated by aggregating repeat passenger data across all months.  
+**Fields:**  
+- city name  
+- total_passengers  
+- repeat_passengers  
 - city_repeat_passenger_rate (%): Overall repeat passenger rate for each city  
 
+```sql
+WITH CityWisePassengers AS (
+    SELECT
+        dc.city_name AS city,
+        SUM(fps.total_passengers) AS passengers,
+        SUM(fps.repeat_passengers) AS repeat_passengers
+    FROM 
+        fact_passenger_summary AS fps
+    JOIN 
+        dim_city AS dc
+        ON fps.city_id = dc.city_id
+    GROUP BY
+        dc.city_name
+),
+CityRepeatPassengerRate AS (
+    SELECT
+        city,
+        passengers,
+        repeat_passengers,
+        ROUND((repeat_passengers * 100.0 / passengers), 2) AS city_repeat_passenger_rate
+    FROM
+        CityWisePassengers
+)
+SELECT
+    city AS "City",
+    passengers AS "Passengers",
+    repeat_passengers AS "Repeat Passengers",
+    city_repeat_passenger_rate AS "Repeat Rate (%)"
+FROM
+    CityRepeatPassengerRate
+ORDER BY
+    city_repeat_passenger_rate DESC;
+```
 ---  
 
 
